@@ -72,7 +72,9 @@ class DressController extends AbstractController
     #[Route('/{id}/edit', name: 'app_dress_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Dress $dress, EntityManagerInterface $entityManager): Response
     {
-        $form = $this->createForm(DressType::class, $dress);
+        $form = $this->createForm(DressType::class, $dress, [
+            'is_edit' => true,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -102,8 +104,8 @@ class DressController extends AbstractController
     public function delete(Request $request, Dress $dress, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete' . $dress->getId(), $request->request->get('_token'))) {
-            if ($dress->getStatus() === Dress::STATUS_RENTED) {
-                $this->addFlash('error', '服装已租出，无法删除！');
+            if ($dress->getRentals()->count() > 0) {
+                $this->addFlash('error', sprintf('该服装有 %d 条历史租单记录，无法删除！', $dress->getRentals()->count()));
                 return $this->redirectToRoute('app_dress_show', ['id' => $dress->getId()]);
             }
             $entityManager->remove($dress);

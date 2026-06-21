@@ -23,8 +23,12 @@
             <tr>
                 <td>#{{ record.id }}</td>
                 <td>
-                    <a href="{{ path('app_dress_show', {id: record.dress.id}) }}">{{ record.dress.name }}</a>
-                    ({{ record.dress.size }}/{{ record.dress.color }})
+                    {% if record.dress %}
+                        <a href="{{ path('app_dress_show', {id: record.dress.id}) }}">{{ record.dress.name }}</a>
+                        ({{ record.dress.size }}/{{ record.dress.color }})
+                    {% else %}
+                        <span style="color:#999;">(服装已删除)</span>
+                    {% endif %}
                 </td>
                 <td>{{ record.rental ? '#' ~ record.rental.id : '-' }}</td>
                 <td>{{ record.scheduledAt|date('Y-m-d H:i') }}</td>
@@ -61,8 +65,12 @@
             <tr>
                 <td>#{{ record.id }}</td>
                 <td>
-                    <a href="{{ path('app_dress_show', {id: record.dress.id}) }}">{{ record.dress.name }}</a>
-                    ({{ record.dress.size }}/{{ record.dress.color }})
+                    {% if record.dress %}
+                        <a href="{{ path('app_dress_show', {id: record.dress.id}) }}">{{ record.dress.name }}</a>
+                        ({{ record.dress.size }}/{{ record.dress.color }})
+                    {% else %}
+                        <span style="color:#999;">(服装已删除)</span>
+                    {% endif %}
                 </td>
                 <td>{{ record.rental ? '#' ~ record.rental.id : '-' }}</td>
                 <td>{{ record.startedAt|date('Y-m-d H:i') }}</td>

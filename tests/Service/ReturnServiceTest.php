@@ -103,7 +103,7 @@ class ReturnServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('损坏扣款总额 2500.00 超过押金 2000.00');
 
-        $this->returnService->processReturn($this->rental, null, $damageItems);
+        $this->returnService->processReturn($this->rental, new \DateTime('2026-06-03'), $damageItems);
     }
 
     public function testProcessReturnClosedRentalThrowsException(): void
@@ -134,10 +134,59 @@ class ReturnServiceTest extends TestCase
         $this->cleaningService->expects($this->never())
             ->method('scheduleCleaning');
 
-        $result = $this->returnService->processReturn($this->rental, null, [], false);
+        $returnDate = new \DateTime('2026-06-03');
+        $result = $this->returnService->processReturn($this->rental, $returnDate, [], false);
 
         $this->assertEquals('2000.00', $result->getDepositRefunded());
         $this->assertEquals(Dress::STATUS_AVAILABLE, $this->dress->getStatus());
+    }
+
+    public function testRentalFeeRecalculatedOnReturn(): void
+    {
+        $this->em->expects($this->atLeastOnce())
+            ->method('persist');
+        $this->em->expects($this->once())
+            ->method('flush');
+        $this->cleaningService->expects($this->once())
+            ->method('scheduleCleaning');
+
+        $returnDate = new \DateTime('2026-06-05');
+        $result = $this->returnService->processReturn($this->rental, $returnDate, [], true);
+
+        $this->assertEquals('1500.00', $result->getRentalFee());
+        $this->assertEquals(5, $result->getRentalDays());
+    }
+
+    public function testRentalFeeEarlyReturnRecalculated(): void
+    {
+        $this->em->expects($this->atLeastOnce())
+            ->method('persist');
+        $this->em->expects($this->once())
+            ->method('flush');
+        $this->cleaningService->expects($this->once())
+            ->method('scheduleCleaning');
+
+        $returnDate = new \DateTime('2026-06-02');
+        $result = $this->returnService->processReturn($this->rental, $returnDate, [], true);
+
+        $this->assertEquals('600.00', $result->getRentalFee());
+        $this->assertEquals(2, $result->getRentalDays());
+    }
+
+    public function testRentalFeeOnDueDateRecalculated(): void
+    {
+        $this->em->expects($this->atLeastOnce())
+            ->method('persist');
+        $this->em->expects($this->once())
+            ->method('flush');
+        $this->cleaningService->expects($this->once())
+            ->method('scheduleCleaning');
+
+        $returnDate = new \DateTime('2026-06-03');
+        $result = $this->returnService->processReturn($this->rental, $returnDate, [], true);
+
+        $this->assertEquals('900.00', $result->getRentalFee());
+        $this->assertEquals(3, $result->getRentalDays());
     }
 
     public function testCalculateDamageTotal(): void
@@ -218,7 +267,8 @@ class ReturnServiceTest extends TestCase
             ['description' => '只有描述没金额', 'amount' => 0],
         ];
 
-        $result = $this->returnService->processReturn($this->rental, null, $damageItems, false);
+        $returnDate = new \DateTime('2026-06-03');
+        $result = $this->returnService->processReturn($this->rental, $returnDate, $damageItems, false);
 
         $this->assertEquals('100.00', $result->getDamageDeduction());
         $this->assertCount(1, $result->getDamageRecords());

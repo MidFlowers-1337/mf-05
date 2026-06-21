@@ -36,8 +36,17 @@
             {% for rental in rentals %}
             <tr>
                 <td><strong>#{{ rental.id }}</strong></td>
-                <td>{{ rental.dress.name }}</td>
-                <td>{{ rental.customer.name }} ({{ rental.customer.phone }})</td>
+                <td>
+                    {% if rental.dress %}
+                        <a href="{{ path('app_dress_show', {id: rental.dress.id}) }}">{{ rental.dress.name }}</a>
+                    {% else %}
+                        <span style="color:#999;">(服装已删除)</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {{ rental.customer.name|default('未知客户') }}
+                    {% if rental.customer and rental.customer.phone %}({{ rental.customer.phone }}){% endif %}
+                </td>
                 <td>{{ rental.rentalDate|date('Y-m-d') }}</td>
                 <td>{{ rental.dueDate|date('Y-m-d') }}</td>
                 <td>{{ rental.returnDate ? rental.returnDate|date('Y-m-d') : '-' }}</td>

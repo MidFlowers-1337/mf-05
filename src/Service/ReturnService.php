@@ -33,6 +33,14 @@ class ReturnService
 
         $rental->setReturnDate($returnDate);
 
+        $dailyRate = $rental->getDress() ? (float)$rental->getDress()->getDailyRate() : 0;
+        if ($dailyRate > 0) {
+            $rentalDate = $rental->getRentalDate();
+            $days = $this->calculateDays($rentalDate, $returnDate);
+            $newRentalFee = number_format($days * $dailyRate, 2, '.', '');
+            $rental->setRentalFee($newRentalFee);
+        }
+
         $totalDeduction = 0;
         foreach ($damageItems as $item) {
             $description = $item['description'] ?? '';
@@ -116,5 +124,11 @@ class ReturnService
         $depositPaid = (float)$rental->getDepositPaid();
         $damageTotal = $this->calculateDamageTotal($rental);
         return max(0, $depositPaid - $damageTotal);
+    }
+
+    private function calculateDays(\DateTimeInterface $start, \DateTimeInterface $end): int
+    {
+        $diff = $end->diff($start);
+        return max(1, (int)$diff->format('%a') + 1);
     }
 }

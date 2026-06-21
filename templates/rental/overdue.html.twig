@@ -31,9 +31,15 @@
             {% for rental in rentals %}
             <tr>
                 <td><strong>#{{ rental.id }}</strong></td>
-                <td>{{ rental.dress.name }} ({{ rental.dress.size }}/{{ rental.dress.color }})</td>
-                <td><strong>{{ rental.customer.name }}</strong></td>
-                <td>📞 {{ rental.customer.phone }}</td>
+                <td>
+                    {% if rental.dress %}
+                        {{ rental.dress.name }} ({{ rental.dress.size }}/{{ rental.dress.color }})
+                    {% else %}
+                        <span style="color:#999;">(服装已删除)</span>
+                    {% endif %}
+                </td>
+                <td><strong>{{ rental.customer.name|default('未知客户') }}</strong></td>
+                <td>📞 {{ rental.customer.phone|default('未留电话') }}</td>
                 <td>{{ rental.rentalDate|date('Y-m-d') }}</td>
                 <td>{{ rental.dueDate|date('Y-m-d') }}</td>
                 <td><span class="badge badge-overdue">{{ rental.overdueDays }}天</span></td>

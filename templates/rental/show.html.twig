@@ -22,11 +22,21 @@
     <div class="detail-grid">
         <div class="detail-item">
             <div class="label">服装</div>
-            <div class="value"><a href="{{ path('app_dress_show', {id: rental.dress.id}) }}">{{ rental.dress.name }}</a> ({{ rental.dress.size }}/{{ rental.dress.color }})</div>
+            <div class="value">
+                {% if rental.dress %}
+                    <a href="{{ path('app_dress_show', {id: rental.dress.id}) }}">{{ rental.dress.name }}</a>
+                    ({{ rental.dress.size }}/{{ rental.dress.color }})
+                {% else %}
+                    <span style="color:#999;">(服装已删除)</span>
+                {% endif %}
+            </div>
         </div>
         <div class="detail-item">
             <div class="label">客户</div>
-            <div class="value">{{ rental.customer.name }} {% if rental.customer.phone %}({{ rental.customer.phone }}){% endif %}</div>
+            <div class="value">
+                {{ rental.customer.name|default('未知客户') }}
+                {% if rental.customer and rental.customer.phone %}({{ rental.customer.phone }}){% endif %}
+            </div>
         </div>
         <div class="detail-item">
             <div class="label">出租日期</div>

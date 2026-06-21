@@ -16,6 +16,8 @@ class DressType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $isEdit = $options['is_edit'] ?? false;
+
         $builder
             ->add('name', TextType::class, [
                 'label' => '款名',
@@ -47,15 +49,6 @@ class DressType extends AbstractType
                 'scale' => 2,
                 'attr' => ['placeholder' => '例如：300'],
             ])
-            ->add('status', ChoiceType::class, [
-                'label' => '状态',
-                'choices' => [
-                    '可出租' => Dress::STATUS_AVAILABLE,
-                    '已租出' => Dress::STATUS_RENTED,
-                    '清洗中' => Dress::STATUS_CLEANING,
-                    '损坏待修' => Dress::STATUS_DAMAGED,
-                ],
-            ])
             ->add('photoFile', FileType::class, [
                 'label' => '现状照片',
                 'mapped' => false,
@@ -74,12 +67,26 @@ class DressType extends AbstractType
                 ],
             ])
         ;
+
+        if ($isEdit) {
+            $builder->add('status', ChoiceType::class, [
+                'label' => '状态',
+                'choices' => [
+                    '可出租' => Dress::STATUS_AVAILABLE,
+                    '已租出' => Dress::STATUS_RENTED,
+                    '清洗中' => Dress::STATUS_CLEANING,
+                    '损坏待修' => Dress::STATUS_DAMAGED,
+                ],
+                'help' => '注意：手动修改状态可能与实际租单不一致，请谨慎操作',
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Dress::class,
+            'is_edit' => false,
         ]);
     }
 }
