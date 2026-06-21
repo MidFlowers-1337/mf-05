@@ -1,0 +1,80 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}服装管理 - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="card">
+    <h2 style="display:flex;justify-content:space-between;align-items:center;">
+        👗 服装列表
+        <a href="{{ path('app_dress_new') }}" class="btn btn-primary">+ 登记新服装</a>
+    </h2>
+
+    <div class="tabs">
+        <a href="{{ path('app_dress_index') }}" {% if not currentStatus %}class="active"{% endif %}>全部</a>
+        <a href="{{ path('app_dress_index', {status: 'available'}) }}" {% if currentStatus == 'available' %}class="active"{% endif %}>可出租</a>
+        <a href="{{ path('app_dress_index', {status: 'rented'}) }}" {% if currentStatus == 'rented' %}class="active"{% endif %}>已租出</a>
+        <a href="{{ path('app_dress_index', {status: 'cleaning'}) }}" {% if currentStatus == 'cleaning' %}class="active"{% endif %}>清洗中</a>
+        <a href="{{ path('app_dress_index', {status: 'damaged'}) }}" {% if currentStatus == 'damaged' %}class="active"{% endif %}>损坏待修</a>
+    </div>
+
+    {% if dresses is empty %}
+    <p>暂无服装记录，点击右上角「登记新服装」开始录入。</p>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>编号</th>
+                <th>款名</th>
+                <th>尺码</th>
+                <th>颜色</th>
+                <th>买价</th>
+                <th>押金</th>
+                <th>日租金</th>
+                <th>状态</th>
+                <th>租出次数</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dress in dresses %}
+            <tr>
+                <td>#{{ dress.id }}</td>
+                <td>{{ dress.name }}</td>
+                <td>{{ dress.size }}</td>
+                <td>{{ dress.color }}</td>
+                <td>¥{{ dress.purchasePrice }}</td>
+                <td>¥{{ dress.deposit }}</td>
+                <td>¥{{ dress.dailyRate }}/天</td>
+                <td>
+                    {% if dress.status == 'available' %}
+                        <span class="badge badge-available">{{ dress.statusLabel }}</span>
+                    {% elseif dress.status == 'rented' %}
+                        <span class="badge badge-rented">{{ dress.statusLabel }}</span>
+                    {% elseif dress.status == 'cleaning' %}
+                        <span class="badge badge-cleaning">{{ dress.statusLabel }}</span>
+                    {% else %}
+                        <span class="badge badge-damaged">{{ dress.statusLabel }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ dress.rentalCount }}次</td>
+                <td>
+                    <div class="actions">
+                        <a href="{{ path('app_dress_show', {id: dress.id}) }}" class="btn btn-secondary btn-sm">详情</a>
+                        {% if dress.status == 'available' %}
+                            <a href="{{ path('app_rental_new', {dressId: dress.id}) }}" class="btn btn-primary btn-sm">出租</a>
+                        {% endif %}
+                        {% if dress.status == 'damaged' %}
+                            <form method="post" action="{{ path('app_cleaning_mark_ready', {dressId: dress.id}) }}" onsubmit="return confirm('确认已修复并送去清洗？')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('markready' ~ dress.id) }}">
+                                <button type="submit" class="btn btn-success btn-sm">修复完成</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

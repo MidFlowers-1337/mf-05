@@ -1,0 +1,92 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}统计报表 - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="card">
+    <h2>📊 月度统计报表</h2>
+
+    <div style="margin-bottom:20px;">
+        <form method="get" style="display:flex;gap:10px;align-items:end;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label>年份</label>
+                <select name="year">
+                    {% for y in years %}
+                    <option value="{{ y }}" {% if y == selectedYear %}selected{% endif %}>{{ y }}年</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label>月份</label>
+                <select name="month">
+                    {% for m in months %}
+                    <option value="{{ m }}" {% if m == selectedMonth %}selected{% endif %}>{{ m }}月</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">查看</button>
+        </form>
+    </div>
+
+    <h3 style="margin:20px 0 15px;font-size:16px;">{{ stats.year }}年{{ stats.month }}月 概览</h3>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.totalRentals }}</div>
+            <div class="stat-label">出租次数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color:#28a745">¥{{ stats.totalRevenue }}</div>
+            <div class="stat-label">租金收入</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color:#dc3545">¥{{ stats.totalDamageDeductions }}</div>
+            <div class="stat-label">损坏扣款</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color:#007bff">{{ stats.rentalRate }}%</div>
+            <div class="stat-label">出租率</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color:#6c757d">{{ stats.totalDresses }}</div>
+            <div class="stat-label">服装总数</div>
+        </div>
+    </div>
+
+    <p style="color:#666;font-size:13px;margin-top:-10px;margin-bottom:20px;">
+        出租率计算：实际出租天数 / (服装总数 × 当月天数) = {{ stats.actualRentalDays }} / {{ stats.maxPossibleRentalDays }}
+    </p>
+
+    <h3 style="margin:20px 0 15px;font-size:16px;">🔥 最抢手服装 TOP 10</h3>
+    {% if stats.mostRented is empty %}
+    <p>本月暂无出租记录。</p>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>排名</th>
+                <th>服装</th>
+                <th>尺码/颜色</th>
+                <th>买价</th>
+                <th>押金</th>
+                <th>本月出租次数</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in stats.mostRented %}
+            {% if item.rentalCount > 0 %}
+            <tr>
+                <td><strong>#{{ loop.index }}</strong></td>
+                <td><a href="{{ path('app_dress_show', {id: item.0.id}) }}">{{ item.0.name }}</a></td>
+                <td>{{ item.0.size }} / {{ item.0.color }}</td>
+                <td>¥{{ item.0.purchasePrice }}</td>
+                <td>¥{{ item.0.deposit }}</td>
+                <td><strong style="color:#8B0000">{{ item.rentalCount }}次</strong></td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}租单管理 - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="card">
+    <h2>📋 租单列表</h2>
+
+    <div class="tabs">
+        <a href="{{ path('app_rental_index') }}" {% if not currentStatus %}class="active"{% endif %}>全部</a>
+        <a href="{{ path('app_rental_index', {status: 'rented'}) }}" {% if currentStatus == 'rented' %}class="active"{% endif %}>已租出</a>
+        <a href="{{ path('app_rental_overdue') }}" {% if currentStatus == 'overdue' %}class="active"{% endif %}>已逾期</a>
+        <a href="{{ path('app_rental_index', {status: 'returned'}) }}" {% if currentStatus == 'returned' %}class="active"{% endif %}>已归还</a>
+        <a href="{{ path('app_rental_index', {status: 'closed'}) }}" {% if currentStatus == 'closed' %}class="active"{% endif %}>已结单</a>
+    </div>
+
+    {% if rentals is empty %}
+    <p>暂无租单记录。</p>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>租单号</th>
+                <th>服装</th>
+                <th>客户</th>
+                <th>出租日期</th>
+                <th>应还日期</th>
+                <th>归还日期</th>
+                <th>押金</th>
+                <th>租金</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rental in rentals %}
+            <tr>
+                <td><strong>#{{ rental.id }}</strong></td>
+                <td>{{ rental.dress.name }}</td>
+                <td>{{ rental.customer.name }} ({{ rental.customer.phone }})</td>
+                <td>{{ rental.rentalDate|date('Y-m-d') }}</td>
+                <td>{{ rental.dueDate|date('Y-m-d') }}</td>
+                <td>{{ rental.returnDate ? rental.returnDate|date('Y-m-d') : '-' }}</td>
+                <td>¥{{ rental.depositPaid }}</td>
+                <td>{{ rental.rentalFee ? '¥' ~ rental.rentalFee : '-' }}</td>
+                <td>
+                    {% if rental.status == 'rented' %}
+                        <span class="badge badge-rented">{{ rental.statusLabel }}</span>
+                    {% elseif rental.status == 'overdue' %}
+                        <span class="badge badge-overdue">{{ rental.statusLabel }} ({{ rental.overdueDays }}天)</span>
+                    {% elseif rental.status == 'returned' %}
+                        <span class="badge badge-cleaning">{{ rental.statusLabel }}</span>
+                    {% else %}
+                        <span class="badge badge-available">{{ rental.statusLabel }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="actions">
+                        <a href="{{ path('app_rental_show', {id: rental.id}) }}" class="btn btn-secondary btn-sm">查看</a>
+                        {% if rental.status == 'rented' or rental.status == 'overdue' %}
+                            <a href="{{ path('app_return_process', {id: rental.id}) }}" class="btn btn-primary btn-sm">办理归还</a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

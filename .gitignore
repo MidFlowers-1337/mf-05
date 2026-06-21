@@ -1,0 +1,10 @@
+/vendor/
+/var/
+/public/uploads/
+/.env.local
+/.env.local.php
+/.env.*.local
+composer.lock
+symfony.lock
+.phpunit.cache
+.phpunit.result.cache

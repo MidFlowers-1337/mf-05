@@ -1,0 +1,25 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Service\RentalService:
+        public: true
+
+    App\Service\ReturnService:
+        public: true
+
+    App\Service\CleaningService:
+        public: true
+
+    App\Service\StatsService:
+        public: true

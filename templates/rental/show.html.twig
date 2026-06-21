@@ -1,0 +1,115 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}租单 #{{ rental.id }} - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="card">
+    <h2 style="display:flex;justify-content:space-between;align-items:center;">
+        📋 租单 #{{ rental.id }}
+        <span>
+            {% if rental.status == 'rented' %}
+                <span class="badge badge-rented">{{ rental.statusLabel }}</span>
+            {% elseif rental.status == 'overdue' %}
+                <span class="badge badge-overdue">{{ rental.statusLabel }}</span>
+            {% elseif rental.status == 'returned' %}
+                <span class="badge badge-cleaning">{{ rental.statusLabel }}</span>
+            {% else %}
+                <span class="badge badge-available">{{ rental.statusLabel }}</span>
+            {% endif %}
+        </span>
+    </h2>
+
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">服装</div>
+            <div class="value"><a href="{{ path('app_dress_show', {id: rental.dress.id}) }}">{{ rental.dress.name }}</a> ({{ rental.dress.size }}/{{ rental.dress.color }})</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">客户</div>
+            <div class="value">{{ rental.customer.name }} {% if rental.customer.phone %}({{ rental.customer.phone }}){% endif %}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">出租日期</div>
+            <div class="value">{{ rental.rentalDate|date('Y-m-d') }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">应还日期</div>
+            <div class="value">
+                {{ rental.dueDate|date('Y-m-d') }}
+                {% if rental.isOverdue %}
+                    <span class="badge badge-overdue">逾期 {{ rental.overdueDays }} 天</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">归还日期</div>
+            <div class="value">{{ rental.returnDate ? rental.returnDate|date('Y-m-d') : '未归还' }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">租赁天数</div>
+            <div class="value">{{ rental.rentalDays }} 天</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">租金</div>
+            <div class="value">¥{{ rental.rentalFee ? rental.rentalFee : '待计算' }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">收取押金</div>
+            <div class="value"><strong>¥{{ rental.depositPaid }}</strong></div>
+        </div>
+        <div class="detail-item">
+            <div class="label">损坏扣款</div>
+            <div class="value" style="color:#dc3545">¥{{ rental.damageDeduction ? rental.damageDeduction : '0.00' }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">退还押金</div>
+            <div class="value" style="color:#28a745"><strong>¥{{ rental.depositRefunded ? rental.depositRefunded : '未退还' }}</strong></div>
+        </div>
+    </div>
+
+    {% if rental.notes %}
+    <div style="margin-top:15px;padding:10px;background:#f8f9fa;border-radius:4px;">
+        <strong>备注：</strong>{{ rental.notes }}
+    </div>
+    {% endif %}
+
+    <div style="margin-top:20px;">
+        {% if rental.status == 'rented' or rental.status == 'overdue' %}
+            <a href="{{ path('app_return_process', {id: rental.id}) }}" class="btn btn-primary">办理归还</a>
+        {% endif %}
+        {% if rental.status == 'returned' %}
+            <form method="post" action="{{ path('app_return_close', {id: rental.id}) }}" style="display:inline" onsubmit="return confirm('确认结单？结单后不可修改。')">
+                <input type="hidden" name="_token" value="{{ csrf_token('close' ~ rental.id) }}">
+                <button type="submit" class="btn btn-success">结单</button>
+            </form>
+        {% endif %}
+        <a href="{{ path('app_rental_index') }}" class="btn btn-secondary">返回列表</a>
+    </div>
+</div>
+
+{% if rental.damageRecords is not empty %}
+<div class="card">
+    <h2>💰 损坏记录 (共扣款 ¥{{ rental.damageDeduction }})</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>编号</th>
+                <th>损坏描述</th>
+                <th>扣款金额</th>
+                <th>记录时间</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in rental.damageRecords %}
+            <tr>
+                <td>#{{ record.id }}</td>
+                <td>{{ record.description }}</td>
+                <td style="color:#dc3545">¥{{ record.deductionAmount }}</td>
+                <td>{{ record.recordedAt|date('Y-m-d H:i') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

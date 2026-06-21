@@ -1,0 +1,5 @@
+proxy:
+    domains: []
+
+web_server:
+    port: 7894

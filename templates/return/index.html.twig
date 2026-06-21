@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}归还检查 - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="card">
+    <h2>↩️ 归还待办（{{ rentals|length }}件）</h2>
+
+    {% if rentals is empty %}
+    <p>✅ 没有待归还的服装！</p>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>租单号</th>
+                <th>服装</th>
+                <th>客户</th>
+                <th>出租日期</th>
+                <th>应还日期</th>
+                <th>押金</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rental in rentals %}
+            <tr>
+                <td><strong>#{{ rental.id }}</strong></td>
+                <td>{{ rental.dress.name }}</td>
+                <td>{{ rental.customer.name }} ({{ rental.customer.phone }})</td>
+                <td>{{ rental.rentalDate|date('Y-m-d') }}</td>
+                <td>
+                    {{ rental.dueDate|date('Y-m-d') }}
+                    {% if rental.isOverdue %}
+                        <span class="badge badge-overdue">逾期{{ rental.overdueDays }}天</span>
+                    {% endif %}
+                </td>
+                <td>¥{{ rental.depositPaid }}</td>
+                <td>
+                    {% if rental.status == 'overdue' %}
+                        <span class="badge badge-overdue">{{ rental.statusLabel }}</span>
+                    {% else %}
+                        <span class="badge badge-rented">{{ rental.statusLabel }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ path('app_return_process', {id: rental.id}) }}" class="btn btn-primary btn-sm">检查归还</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

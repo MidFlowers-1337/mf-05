@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}礼服租赁管理系统{% endblock %}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: #8B0000; color: white; padding: 15px 0; margin-bottom: 20px; }
+        .header .container { display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; }
+        .nav { display: flex; gap: 15px; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; font-size: 14px; }
+        .nav a:hover, .nav a.active { background: rgba(255,255,255,0.2); }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card h2 { font-size: 18px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+        th { background: #fafafa; font-weight: 600; }
+        tr:hover { background: #f9f9f9; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+        .badge-available { background: #d4edda; color: #155724; }
+        .badge-rented { background: #fff3cd; color: #856404; }
+        .badge-cleaning { background: #d1ecf1; color: #0c5460; }
+        .badge-damaged { background: #f8d7da; color: #721c24; }
+        .badge-overdue { background: #f8d7da; color: #721c24; }
+        .badge-returned { background: #e2e3e5; color: #383d41; }
+        .badge-closed { background: #d4edda; color: #155724; }
+        .btn { display: inline-block; padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; text-decoration: none; }
+        .btn-primary { background: #8B0000; color: white; }
+        .btn-primary:hover { background: #6B0000; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #8B0000; }
+        .form-row { display: flex; gap: 15px; }
+        .form-row .form-group { flex: 1; }
+        .flash-messages { margin-bottom: 20px; }
+        .flash { padding: 10px 15px; border-radius: 4px; margin-bottom: 10px; }
+        .flash-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .flash-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stat-card .stat-value { font-size: 28px; font-weight: bold; color: #8B0000; }
+        .stat-card .stat-label { font-size: 13px; color: #666; margin-top: 5px; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
+        .detail-item { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .detail-item .label { color: #666; font-size: 13px; }
+        .detail-item .value { font-size: 15px; font-weight: 500; }
+        .photo-placeholder { width: 200px; height: 250px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999; border-radius: 4px; }
+        .photo-placeholder img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+        .actions { display: flex; gap: 8px; }
+        .tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #eee; }
+        .tabs a { padding: 10px 20px; text-decoration: none; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+        .tabs a.active { color: #8B0000; border-bottom-color: #8B0000; }
+        .damage-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: end; }
+        .damage-row .form-group { margin-bottom: 0; }
+        .add-btn { margin-top: 10px; }
+        .alert { padding: 12px 15px; border-radius: 4px; margin-bottom: 15px; }
+        .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>👗 礼服租赁管理系统</h1>
+            <nav class="nav">
+                <a href="{{ path('app_home') }}" {% if app.request.attributes.get('_route') == 'app_home' %}class="active"{% endif %}>首页</a>
+                <a href="{{ path('app_dress_index') }}" {% if app.request.attributes.get('_route') starts with 'app_dress' %}class="active"{% endif %}>服装管理</a>
+                <a href="{{ path('app_rental_index') }}" {% if app.request.attributes.get('_route') starts with 'app_rental' %}class="active"{% endif %}>租单管理</a>
+                <a href="{{ path('app_return_index') }}" {% if app.request.attributes.get('_route') starts with 'app_return' %}class="active"{% endif %}>归还检查</a>
+                <a href="{{ path('app_rental_overdue') }}" {% if app.request.attributes.get('_route') == 'app_rental_overdue' %}class="active"{% endif %}>逾期催还</a>
+                <a href="{{ path('app_cleaning_index') }}" {% if app.request.attributes.get('_route') starts with 'app_cleaning' %}class="active"{% endif %}>清洗排期</a>
+                <a href="{{ path('app_stats_index') }}" {% if app.request.attributes.get('_route') starts with 'app_stats' %}class="active"{% endif %}>统计报表</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container">
+        {% if app.flashes %}
+            <div class="flash-messages">
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="flash flash-{{ label }}">{{ message }}</div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block body %}{% endblock %}
+    </div>
+</body>
+</html>

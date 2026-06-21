@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}逾期催还 - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="card">
+    <h2>⚠️ 逾期催还列表</h2>
+
+    {% if rentals is empty %}
+    <p>✅ 目前没有逾期未还的服装！</p>
+    {% else %}
+    <div class="alert alert-warning">
+        共 {{ rentals|length }} 件服装逾期未还，请及时联系客户催还。
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>租单号</th>
+                <th>服装</th>
+                <th>客户</th>
+                <th>联系电话</th>
+                <th>出租日期</th>
+                <th>应还日期</th>
+                <th>逾期天数</th>
+                <th>押金</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rental in rentals %}
+            <tr>
+                <td><strong>#{{ rental.id }}</strong></td>
+                <td>{{ rental.dress.name }} ({{ rental.dress.size }}/{{ rental.dress.color }})</td>
+                <td><strong>{{ rental.customer.name }}</strong></td>
+                <td>📞 {{ rental.customer.phone }}</td>
+                <td>{{ rental.rentalDate|date('Y-m-d') }}</td>
+                <td>{{ rental.dueDate|date('Y-m-d') }}</td>
+                <td><span class="badge badge-overdue">{{ rental.overdueDays }}天</span></td>
+                <td>¥{{ rental.depositPaid }}</td>
+                <td>
+                    <div class="actions">
+                        <a href="{{ path('app_rental_show', {id: rental.id}) }}" class="btn btn-secondary btn-sm">查看详情</a>
+                        <a href="{{ path('app_return_process', {id: rental.id}) }}" class="btn btn-primary btn-sm">办理归还</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

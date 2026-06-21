@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}出租服装 - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="card">
+    <h2>📝 出租登记</h2>
+
+    <div style="padding:15px;background:#f8f9fa;border-radius:6px;margin-bottom:20px;">
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="label">服装</div>
+                <div class="value">{{ dress.name }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">尺码/颜色</div>
+                <div class="value">{{ dress.size }} / {{ dress.color }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">押金</div>
+                <div class="value">¥{{ dress.deposit }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">日租金</div>
+                <div class="value">¥{{ dress.dailyRate }}/天</div>
+            </div>
+        </div>
+    </div>
+
+    {% if not dress.available %}
+    <div class="alert alert-danger">
+        ⚠️ 该服装当前状态为「{{ dress.statusLabel }}」，不可出租！
+    </div>
+    {% else %}
+    <form method="post">
+        <h3 style="font-size:16px;margin:20px 0 15px;border-bottom:1px solid #eee;padding-bottom:10px;">👤 客户信息</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label>客户姓名 *</label>
+                <input type="text" name="customer_name" required placeholder="请输入客户姓名">
+            </div>
+            <div class="form-group">
+                <label>联系电话</label>
+                <input type="tel" name="customer_phone" placeholder="请输入手机号码">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>身份证号</label>
+                <input type="text" name="customer_idcard" placeholder="可选，用于记录身份信息">
+            </div>
+            <div class="form-group">
+                <label>住址</label>
+                <input type="text" name="customer_address" placeholder="可选">
+            </div>
+        </div>
+
+        <h3 style="font-size:16px;margin:20px 0 15px;border-bottom:1px solid #eee;padding-bottom:10px;">📅 租赁信息</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label>出租日期 *</label>
+                <input type="date" name="rental_date" value="{{ today }}" required>
+            </div>
+            <div class="form-group">
+                <label>应还日期 *</label>
+                <input type="date" name="due_date" value="{{ defaultDue }}" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>备注</label>
+            <textarea name="notes" rows="2" placeholder="可选，特殊要求等"></textarea>
+        </div>
+
+        <div style="margin-top:20px;">
+            <button type="submit" class="btn btn-primary">确认出租 (收取押金 ¥{{ dress.deposit }})</button>
+            <a href="{{ path('app_dress_show', {id: dress.id}) }}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

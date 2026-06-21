@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}清洗排期 - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="card">
+    <h2>🧺 待清洗（{{ pending|length }}件）</h2>
+    {% if pending is empty %}
+    <p>暂无待清洗服装。</p>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>编号</th>
+                <th>服装</th>
+                <th>关联租单</th>
+                <th>安排时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in pending %}
+            <tr>
+                <td>#{{ record.id }}</td>
+                <td>
+                    <a href="{{ path('app_dress_show', {id: record.dress.id}) }}">{{ record.dress.name }}</a>
+                    ({{ record.dress.size }}/{{ record.dress.color }})
+                </td>
+                <td>{{ record.rental ? '#' ~ record.rental.id : '-' }}</td>
+                <td>{{ record.scheduledAt|date('Y-m-d H:i') }}</td>
+                <td>
+                    <form method="post" action="{{ path('app_cleaning_start', {id: record.id}) }}" onsubmit="return confirm('开始清洗这件服装？')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('start' ~ record.id) }}">
+                        <button type="submit" class="btn btn-primary btn-sm">开始清洗</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>🫧 清洗中（{{ inProgress|length }}件）</h2>
+    {% if inProgress is empty %}
+    <p>暂无正在清洗的服装。</p>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>编号</th>
+                <th>服装</th>
+                <th>关联租单</th>
+                <th>开始时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in inProgress %}
+            <tr>
+                <td>#{{ record.id }}</td>
+                <td>
+                    <a href="{{ path('app_dress_show', {id: record.dress.id}) }}">{{ record.dress.name }}</a>
+                    ({{ record.dress.size }}/{{ record.dress.color }})
+                </td>
+                <td>{{ record.rental ? '#' ~ record.rental.id : '-' }}</td>
+                <td>{{ record.startedAt|date('Y-m-d H:i') }}</td>
+                <td>
+                    <form method="post" action="{{ path('app_cleaning_complete', {id: record.id}) }}" onsubmit="return confirm('确认清洗完成？服装将变为可出租状态。')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ record.id) }}">
+                        <button type="submit" class="btn btn-success btn-sm">清洗完成</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

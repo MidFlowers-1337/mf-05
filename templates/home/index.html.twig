@@ -1,0 +1,117 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}首页 - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ overview.totalDresses }}</div>
+        <div class="stat-label">服装总数</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color:#28a745">{{ overview.availableDresses }}</div>
+        <div class="stat-label">可出租</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color:#856404">{{ overview.rentedDresses }}</div>
+        <div class="stat-label">已租出</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color:#0c5460">{{ overview.cleaningDresses }}</div>
+        <div class="stat-label">清洗中</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color:#721c24">{{ overview.damagedDresses }}</div>
+        <div class="stat-label">损坏待修</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color:#007bff">{{ overview.activeRentals }}</div>
+        <div class="stat-label">进行中租单</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color:#dc3545">{{ overview.overdueRentals }}</div>
+        <div class="stat-label">逾期未还</div>
+    </div>
+</div>
+
+{% if overdueRentals is not empty %}
+<div class="card">
+    <h2>⚠️ 逾期催还（{{ overdueRentals|length }}件）</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>租单号</th>
+                <th>服装</th>
+                <th>客户</th>
+                <th>出租日期</th>
+                <th>应还日期</th>
+                <th>逾期天数</th>
+                <th>押金</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rental in overdueRentals %}
+            <tr>
+                <td>#{{ rental.id }}</td>
+                <td>{{ rental.dress.name }}</td>
+                <td>{{ rental.customer.name }} ({{ rental.customer.phone }})</td>
+                <td>{{ rental.rentalDate|date('Y-m-d') }}</td>
+                <td>{{ rental.dueDate|date('Y-m-d') }}</td>
+                <td><span class="badge badge-overdue">{{ rental.overdueDays }}天</span></td>
+                <td>¥{{ rental.depositPaid }}</td>
+                <td>
+                    <a href="{{ path('app_return_process', {id: rental.id}) }}" class="btn btn-primary btn-sm">办理归还</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>📋 最近租单</h2>
+    {% if activeRentals is empty %}
+    <p>暂无进行中的租单。</p>
+    {% else %}
+    <table>
+        <thead>
+            <tr>
+                <th>租单号</th>
+                <th>服装</th>
+                <th>客户</th>
+                <th>出租日期</th>
+                <th>应还日期</th>
+                <th>押金</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rental in activeRentals %}
+            <tr>
+                <td>#{{ rental.id }}</td>
+                <td>{{ rental.dress.name }}</td>
+                <td>{{ rental.customer.name }}</td>
+                <td>{{ rental.rentalDate|date('Y-m-d') }}</td>
+                <td>{{ rental.dueDate|date('Y-m-d') }}</td>
+                <td>¥{{ rental.depositPaid }}</td>
+                <td>
+                    {% if rental.status == 'overdue' %}
+                        <span class="badge badge-overdue">{{ rental.statusLabel }}</span>
+                    {% else %}
+                        <span class="badge badge-rented">{{ rental.statusLabel }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ path('app_rental_show', {id: rental.id}) }}" class="btn btn-secondary btn-sm">查看</a>
+                    <a href="{{ path('app_return_process', {id: rental.id}) }}" class="btn btn-primary btn-sm">归还</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}
