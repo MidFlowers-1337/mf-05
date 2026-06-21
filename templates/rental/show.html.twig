@@ -34,8 +34,12 @@
         <div class="detail-item">
             <div class="label">客户</div>
             <div class="value">
-                {{ rental.customer.name|default('未知客户') }}
-                {% if rental.customer and rental.customer.phone %}({{ rental.customer.phone }}){% endif %}
+                {% if rental.customer %}
+                    <a href="{{ path('app_customer_show', {id: rental.customer.id}) }}">{{ rental.customer.name }}</a>
+                    {% if rental.customer.phone %}({{ rental.customer.phone }}){% endif %}
+                {% else %}
+                    未知客户
+                {% endif %}
             </div>
         </div>
         <div class="detail-item">
@@ -66,6 +70,10 @@
         <div class="detail-item">
             <div class="label">收取押金</div>
             <div class="value"><strong>¥{{ rental.depositPaid }}</strong></div>
+        </div>
+        <div class="detail-item">
+            <div class="label">押金支付方式</div>
+            <div class="value">{{ rental.depositMethodLabel }}</div>
         </div>
         <div class="detail-item">
             <div class="label">损坏扣款</div>

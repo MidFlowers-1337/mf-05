@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Entity\AccountTransaction;
 use App\Entity\Dress;
 use App\Entity\Rental;
 use Doctrine\ORM\EntityManagerInterface;
@@ -27,6 +28,7 @@ class StatsService
 
         $rentalRepo = $this->em->getRepository(Rental::class);
         $dressRepo = $this->em->getRepository(Dress::class);
+        $txRepo = $this->em->getRepository(AccountTransaction::class);
 
         $rentals = $rentalRepo->findByDateRange($from, $to);
 
@@ -58,12 +60,15 @@ class StatsService
 
         $mostRented = $dressRepo->findMostRented(10, $from, $to);
 
+        $totalRecharges = $txRepo->getMonthlyRechargeTotal($year, $month);
+
         return [
             'year' => $year,
             'month' => $month,
             'totalRentals' => $totalRentals,
             'totalRevenue' => number_format($totalRevenue, 2, '.', ''),
             'totalDamageDeductions' => number_format($totalDamageDeductions, 2, '.', ''),
+            'totalRecharges' => $totalRecharges,
             'totalDresses' => $totalDresses,
             'rentalRate' => $rentalRate,
             'actualRentalDays' => $actualRentalDays,

@@ -12,6 +12,7 @@ class ReturnService
     public function __construct(
         private EntityManagerInterface $em,
         private CleaningService $cleaningService,
+        private AccountService $accountService,
     ) {
     }
 
@@ -89,6 +90,10 @@ class ReturnService
         $this->em->persist($rental);
         $this->em->persist($rental->getDress());
         $this->em->flush();
+
+        if ($rental->getDepositMethod() === Rental::DEPOSIT_METHOD_ACCOUNT) {
+            $this->accountService->processReturnRefund($rental, number_format($totalDeduction, 2, '.', ''));
+        }
 
         return $rental;
     }

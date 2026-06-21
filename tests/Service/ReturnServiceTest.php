@@ -6,6 +6,7 @@ use App\Entity\Customer;
 use App\Entity\DamageRecord;
 use App\Entity\Dress;
 use App\Entity\Rental;
+use App\Service\AccountService;
 use App\Service\CleaningService;
 use App\Service\ReturnService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -15,6 +16,7 @@ class ReturnServiceTest extends TestCase
 {
     private EntityManagerInterface $em;
     private CleaningService $cleaningService;
+    private AccountService $accountService;
     private ReturnService $returnService;
     private Dress $dress;
     private Customer $customer;
@@ -24,7 +26,8 @@ class ReturnServiceTest extends TestCase
     {
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->cleaningService = $this->createMock(CleaningService::class);
-        $this->returnService = new ReturnService($this->em, $this->cleaningService);
+        $this->accountService = $this->createMock(AccountService::class);
+        $this->returnService = new ReturnService($this->em, $this->cleaningService, $this->accountService);
 
         $this->dress = new Dress();
         $this->dress->setName('测试婚纱');

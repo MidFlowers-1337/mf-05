@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\CustomerRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
@@ -27,15 +28,22 @@ class Customer
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $address = null;
 
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, options: ['default' => '0.00'])]
+    private ?string $balance = '0.00';
+
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\OneToMany(mappedBy: 'customer', targetEntity: Rental::class)]
     private Collection $rentals;
 
+    #[ORM\OneToMany(mappedBy: 'customer', targetEntity: AccountTransaction::class)]
+    private Collection $accountTransactions;
+
     public function __construct()
     {
         $this->rentals = new ArrayCollection();
+        $this->accountTransactions = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -99,11 +107,30 @@ class Customer
         return $this;
     }
 
+    public function getBalance(): ?string
+    {
+        return $this->balance;
+    }
+
+    public function setBalance(string $balance): self
+    {
+        $this->balance = $balance;
+        return $this;
+    }
+
     /**
      * @return Collection<int, Rental>
      */
     public function getRentals(): Collection
     {
         return $this->rentals;
+    }
+
+    /**
+     * @return Collection<int, AccountTransaction>
+     */
+    public function getAccountTransactions(): Collection
+    {
+        return $this->accountTransactions;
     }
 }

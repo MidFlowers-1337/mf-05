@@ -16,6 +16,9 @@ class Rental
     public const STATUS_OVERDUE = 'overdue';
     public const STATUS_CLOSED = 'closed';
 
+    public const DEPOSIT_METHOD_CASH = 'cash';
+    public const DEPOSIT_METHOD_ACCOUNT = 'account';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -52,6 +55,9 @@ class Rental
 
     #[ORM\Column(length: 50)]
     private ?string $status = self::STATUS_RENTED;
+
+    #[ORM\Column(length: 20, options: ['default' => 'cash'])]
+    private ?string $depositMethod = self::DEPOSIT_METHOD_CASH;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
@@ -181,6 +187,26 @@ class Rental
     {
         $this->status = $status;
         return $this;
+    }
+
+    public function getDepositMethod(): ?string
+    {
+        return $this->depositMethod;
+    }
+
+    public function setDepositMethod(string $depositMethod): self
+    {
+        $this->depositMethod = $depositMethod;
+        return $this;
+    }
+
+    public function getDepositMethodLabel(): string
+    {
+        $labels = [
+            self::DEPOSIT_METHOD_CASH => '现金',
+            self::DEPOSIT_METHOD_ACCOUNT => '账户余额',
+        ];
+        return $labels[$this->depositMethod] ?? $this->depositMethod;
     }
 
     public function getStatusLabel(): string

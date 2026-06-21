@@ -11,6 +11,7 @@ class RentalService
 {
     public function __construct(
         private EntityManagerInterface $em,
+        private AccountService $accountService,
     ) {
     }
 
@@ -19,7 +20,8 @@ class RentalService
         Customer $customer,
         \DateTimeInterface $rentalDate,
         \DateTimeInterface $dueDate,
-        ?string $notes = null
+        ?string $notes = null,
+        string $depositMethod = Rental::DEPOSIT_METHOD_CASH
     ): Rental {
         if (!$dress->isAvailable()) {
             throw new \InvalidArgumentException('该服装当前不可出租，状态：' . $dress->getStatusLabel());
@@ -27,6 +29,10 @@ class RentalService
 
         if ($dueDate < $rentalDate) {
             throw new \InvalidArgumentException('归还日期不能早于出租日期');
+        }
+
+        if (!in_array($depositMethod, [Rental::DEPOSIT_METHOD_CASH, Rental::DEPOSIT_METHOD_ACCOUNT])) {
+            throw new \InvalidArgumentException('无效的押金支付方式');
         }
 
         $rental = new Rental();
@@ -37,6 +43,7 @@ class RentalService
         $rental->setDepositPaid($dress->getDeposit());
         $rental->setStatus(Rental::STATUS_RENTED);
         $rental->setNotes($notes);
+        $rental->setDepositMethod($depositMethod);
 
         $days = $this->calculateDays($rentalDate, $dueDate);
         $dailyRate = (float)$dress->getDailyRate();
@@ -48,6 +55,10 @@ class RentalService
         $this->em->persist($rental);
         $this->em->persist($dress);
         $this->em->flush();
+
+        if ($depositMethod === Rental::DEPOSIT_METHOD_ACCOUNT) {
+            $this->accountService->freezeDeposit($rental);
+        }
 
         return $rental;
     }

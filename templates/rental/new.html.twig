@@ -32,26 +32,37 @@
         ⚠️ 该服装当前状态为「{{ dress.statusLabel }}」，不可出租！
     </div>
     {% else %}
-    <form method="post">
+    <form method="post" id="rental-form">
         <h3 style="font-size:16px;margin:20px 0 15px;border-bottom:1px solid #eee;padding-bottom:10px;">👤 客户信息</h3>
         <div class="form-row">
             <div class="form-group">
                 <label>客户姓名 *</label>
-                <input type="text" name="customer_name" required placeholder="请输入客户姓名">
+                <input type="text" name="customer_name" id="customer_name" required placeholder="请输入客户姓名">
             </div>
             <div class="form-group">
                 <label>联系电话</label>
-                <input type="tel" name="customer_phone" placeholder="请输入手机号码">
+                <input type="tel" name="customer_phone" id="customer_phone" placeholder="请输入手机号码">
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
                 <label>身份证号</label>
-                <input type="text" name="customer_idcard" placeholder="可选，用于记录身份信息">
+                <input type="text" name="customer_idcard" id="customer_idcard" placeholder="可选，用于记录身份信息">
             </div>
             <div class="form-group">
                 <label>住址</label>
                 <input type="text" name="customer_address" placeholder="可选">
+            </div>
+        </div>
+
+        <div id="customer-info-box" style="display:none;padding:12px;background:#e8f5e9;border-radius:6px;margin-bottom:15px;border:1px solid #c8e6c9;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <strong>找到老客户：</strong><span id="found-customer-name"></span>
+                    <span style="color:#666;margin-left:10px;">账户余额：</span>
+                    <span id="found-customer-balance" style="font-weight:bold;color:#28a745;"></span>
+                </div>
+                <a id="customer-detail-link" href="#" target="_blank" class="btn btn-sm btn-secondary">查看详情</a>
             </div>
         </div>
 
@@ -71,11 +82,130 @@
             <textarea name="notes" rows="2" placeholder="可选，特殊要求等"></textarea>
         </div>
 
+        <h3 style="font-size:16px;margin:20px 0 15px;border-bottom:1px solid #eee;padding-bottom:10px;">💰 押金支付方式</h3>
+        <div style="display:flex;gap:20px;margin-bottom:15px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 15px;border:2px solid #ddd;border-radius:6px;flex:1;">
+                <input type="radio" name="deposit_method" value="cash" checked style="width:auto;">
+                <div>
+                    <div style="font-weight:600;">💵 现金支付</div>
+                    <div style="font-size:12px;color:#666;">当面收取押金，归还时退现金</div>
+                </div>
+            </label>
+            <label id="account-option" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 15px;border:2px solid #ddd;border-radius:6px;flex:1;">
+                <input type="radio" name="deposit_method" value="account" style="width:auto;">
+                <div>
+                    <div style="font-weight:600;">💳 账户余额</div>
+                    <div style="font-size:12px;color:#666;">从客户账户余额冻结押金</div>
+                </div>
+            </label>
+        </div>
+        <div id="account-balance-warning" style="display:none;padding:10px;background:#fff3cd;border-radius:6px;margin-bottom:15px;border:1px solid #ffe082;color:#856404;">
+            ⚠️ 客户账户余额不足，请先充值或选择现金支付
+        </div>
+
         <div style="margin-top:20px;">
-            <button type="submit" class="btn btn-primary">确认出租 (收取押金 ¥{{ dress.deposit }})</button>
+            <button type="submit" id="submit-btn" class="btn btn-primary">确认出租 (收取押金 ¥{{ dress.deposit }})</button>
             <a href="{{ path('app_dress_show', {id: dress.id}) }}" class="btn btn-secondary">取消</a>
         </div>
     </form>
     {% endif %}
 </div>
+
+<script>
+const depositAmount = {{ dress.deposit }};
+let customerBalance = null;
+let customerId = null;
+
+function checkCustomer() {
+    const phone = document.getElementById('customer_phone').value.trim();
+    const idcard = document.getElementById('customer_idcard').value.trim();
+
+    if (!phone && !idcard) {
+        hideCustomerInfo();
+        return;
+    }
+
+    const params = new URLSearchParams();
+    if (phone) params.append('phone', phone);
+    if (idcard) params.append('idcard', idcard);
+
+    fetch('{{ path('app_rental_check_customer') }}?' + params.toString())
+        .then(response => response.json())
+        .then(data => {
+            if (data.found) {
+                showCustomerInfo(data.name, data.balance, data.id);
+                if (document.getElementById('customer_name').value.trim() === '') {
+                    document.getElementById('customer_name').value = data.name;
+                }
+            } else {
+                hideCustomerInfo();
+            }
+            updateAccountOption();
+        });
+}
+
+function showCustomerInfo(name, balance, id) {
+    customerBalance = parseFloat(balance);
+    customerId = id;
+    document.getElementById('found-customer-name').textContent = name;
+    document.getElementById('found-customer-balance').textContent = '¥' + balance;
+    document.getElementById('customer-detail-link').href = '{{ path('app_customer_show', {id: 999}) }}'.replace('999', id);
+    document.getElementById('customer-info-box').style.display = 'block';
+}
+
+function hideCustomerInfo() {
+    customerBalance = null;
+    customerId = null;
+    document.getElementById('customer-info-box').style.display = 'none';
+}
+
+function updateAccountOption() {
+    const accountOption = document.getElementById('account-option');
+    const warning = document.getElementById('account-balance-warning');
+    const accountRadio = document.querySelector('input[name="deposit_method"][value="account"]');
+    const cashRadio = document.querySelector('input[name="deposit_method"][value="cash"]');
+
+    if (customerBalance === null) {
+        accountOption.style.opacity = '0.5';
+        accountOption.style.cursor = 'not-allowed';
+        accountRadio.disabled = true;
+        warning.style.display = 'none';
+    } else if (customerBalance < depositAmount) {
+        accountOption.style.opacity = '0.5';
+        accountOption.style.cursor = 'not-allowed';
+        accountRadio.disabled = true;
+        warning.style.display = 'block';
+        if (accountRadio.checked) {
+            cashRadio.checked = true;
+        }
+    } else {
+        accountOption.style.opacity = '1';
+        accountOption.style.cursor = 'pointer';
+        accountRadio.disabled = false;
+        warning.style.display = 'none';
+    }
+}
+
+document.getElementById('customer_phone').addEventListener('blur', checkCustomer);
+document.getElementById('customer_idcard').addEventListener('blur', checkCustomer);
+
+document.querySelectorAll('input[name="deposit_method"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const btn = document.getElementById('submit-btn');
+        if (this.value === 'account') {
+            btn.textContent = '确认出租 (从账户冻结押金 ¥{{ dress.deposit }})';
+        } else {
+            btn.textContent = '确认出租 (收取押金 ¥{{ dress.deposit }})';
+        }
+    });
+});
+
+document.getElementById('rental-form').addEventListener('submit', function(e) {
+    const method = document.querySelector('input[name="deposit_method"]:checked').value;
+    if (method === 'account' && (customerBalance === null || customerBalance < depositAmount)) {
+        e.preventDefault();
+        alert('客户账户余额不足，请先充值或选择现金支付');
+    }
+});
+</script>
 {% endblock %}

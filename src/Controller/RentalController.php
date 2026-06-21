@@ -4,10 +4,13 @@ namespace App\Controller;
 
 use App\Entity\Dress;
 use App\Entity\Rental;
+use App\Repository\CustomerRepository;
 use App\Repository\RentalRepository;
+use App\Service\AccountService;
 use App\Service\RentalService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -50,11 +53,16 @@ class RentalController extends AbstractController
         int $dressId,
         RentalService $rentalService,
         EntityManagerInterface $em,
+        CustomerRepository $customerRepository,
+        AccountService $accountService,
     ): Response {
         $dress = $em->getRepository(Dress::class)->find($dressId);
         if (!$dress) {
             throw $this->createNotFoundException('服装不存在');
         }
+
+        $existingCustomer = null;
+        $customerBalance = null;
 
         if ($request->isMethod('POST')) {
             $customerName = $request->request->get('customer_name');
@@ -64,6 +72,7 @@ class RentalController extends AbstractController
             $rentalDateStr = $request->request->get('rental_date');
             $dueDateStr = $request->request->get('due_date');
             $notes = $request->request->get('notes');
+            $depositMethod = $request->request->get('deposit_method', Rental::DEPOSIT_METHOD_CASH);
 
             if (empty($customerName)) {
                 $this->addFlash('error', '请填写客户姓名');
@@ -77,7 +86,22 @@ class RentalController extends AbstractController
                         $customerIdCard,
                         $customerAddress
                     );
-                    $rental = $rentalService->createRental($dress, $customer, $rentalDate, $dueDate, $notes);
+
+                    if ($depositMethod === Rental::DEPOSIT_METHOD_ACCOUNT
+                        && !$accountService->canAfford($customer, $dress->getDeposit())) {
+                        throw new \InvalidArgumentException(
+                            sprintf('客户账户余额 ¥%s 不足，无法支付押金 ¥%s，请先充值', $customer->getBalance(), $dress->getDeposit())
+                        );
+                    }
+
+                    $rental = $rentalService->createRental(
+                        $dress,
+                        $customer,
+                        $rentalDate,
+                        $dueDate,
+                        $notes,
+                        $depositMethod
+                    );
                     $this->addFlash('success', sprintf('租单创建成功！单号：#%d', $rental->getId()));
                     return $this->redirectToRoute('app_rental_show', ['id' => $rental->getId()]);
                 } catch (\InvalidArgumentException $e) {
@@ -94,6 +118,35 @@ class RentalController extends AbstractController
             'today' => $today,
             'defaultDue' => $defaultDue,
         ]);
+    }
+
+    #[Route('/customer/check', name: 'app_rental_check_customer', methods: ['GET'])]
+    public function checkCustomer(
+        Request $request,
+        CustomerRepository $customerRepository,
+    ): JsonResponse {
+        $phone = trim($request->query->get('phone', ''));
+        $idCard = trim($request->query->get('idcard', ''));
+
+        $customer = null;
+        if ($phone) {
+            $customer = $customerRepository->findOneBy(['phone' => $phone]);
+        }
+        if (!$customer && $idCard) {
+            $customer = $customerRepository->findOneBy(['idCard' => $idCard]);
+        }
+
+        if ($customer) {
+            return new JsonResponse([
+                'found' => true,
+                'name' => $customer->getName(),
+                'phone' => $customer->getPhone(),
+                'balance' => $customer->getBalance(),
+                'id' => $customer->getId(),
+            ]);
+        }
+
+        return new JsonResponse(['found' => false]);
     }
 
     #[Route('/{id}', name: 'app_rental_show', methods: ['GET'])]
